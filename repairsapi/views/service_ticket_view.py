@@ -4,11 +4,19 @@ from rest_framework.viewsets import ViewSet
 from rest_framework.response import Response
 from rest_framework import serializers, status
 from repairsapi.models import ServiceTicket, Employee, Customer
+from django.contrib.auth.models import User
+
 
 
 
 class ServiceTicketView(ViewSet):
     """Honey Rae API Ticket view"""
+    def destroy (self, request, pk=None):
+        ticket = ServiceTicket.objects.get(pk=pk)
+        ticket.delete()
+        return Response(None, status=status.HTTP_204_NO_CONTENT)
+
+
 
     def list(self, request):
         """Handle GET requests to get all Tickets
@@ -47,7 +55,7 @@ class ServiceTicketView(ViewSet):
         return Response(serialized.data, status=status.HTTP_200_OK)
     
 
-
+    
     def create(self, request):
         """Handle POST requests for service tickets
 
@@ -63,6 +71,22 @@ class ServiceTicketView(ViewSet):
         serialized = ServiceTicketSerializer(new_ticket, many=False)
 
         return Response(serialized.data, status=status.HTTP_201_CREATED)
+    
+    def update(self, request, pk=None):
+        #Select the targeted ticket using pk
+        ticket = ServiceTicket.objects.get(pk=pk)
+
+        #Get the employee id from the client request
+        employee_id = request.data['employee']
+
+        #Select the employee from the database using that id
+        assigned_employee = Employee.objects.get(pk=employee_id)
+
+        #Assign that employee to the employee property of th. ticket
+        ticket.employee = assigned_employee
+        ticket.save()
+        return Response(None, status=status.HTTP_204_NO_CONTENT)
+
     
 class TicketEmployeeSerializer(serializers.ModelSerializer):
     class Meta:
